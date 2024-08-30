@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="includes :: head"></head>
+<head th:replace="includes :: openstreetmap"></head>
+
+<link rel="stylesheet" th:vhref="/css/alert.css" />
+<script type="text/javascript">
+    window.addEventListener( 'message', (e) => {
+      if( e.data.functionName )
+          // 전달받은 데이터를 명칭으로 하는 함수를 실행시킨다.
+          window[e.data.functionName](
+            // 파라미터를 가변인자로 전달
+            ...e.data.params
+          );
+      });
+</script>
+<body>
+<div class="wrap l-dist">
+    <nav th:replace="includes :: navi"></nav>
+    <div class="main" >
+        <div class="main-container geofence">
+            <div class="page-content d-flex" style="padding-top:2px;height: 100%;">
+                <div class="col-sm-5 first-box-wiget tml" style="height: 100%; overflow: hidden;">
+                    <!-- Port 목록 -->
+                    <div id="portGeoList" class="pt-2">
+                        <div class="title mb-2">Geofence</div>
+                        <div class="srch a-c">
+                            <label for="srchPortType"></label>
+                            <select class="form-select" id="srchPortType">
+                                <option value="">Type</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                            </select>
+                            <select class="form-select" id="srchPortKey">
+                                <option value="PORT_CD">Port</option>
+                                <option value="REP_PORT_CD">Rep. Port</option>
+                                <option value="UN_LOC_CD">UN/Locode</option>
+                            </select>
+                            <label for="srchPortVal"></label>
+                            <input type="text" class="search form-control form-control-lg uppercase" id="srchPortVal" onkeyup="funcEnterKey(this)" >
+                            <button type="button" id="srchPortBtn" class="btn_src" style="top: -1px !important;">검색</button>
+
+                            <div class="btn-group fl_r mt-2">
+                                <button type="button" class="dropdown-btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li id="btnMenuRepPort"><a class="dropdown-item" href="#">Rep. 메뉴</a></li>
+                                    <li id="btnAddPort"><a class="dropdown-item" href="#">Port. 등록</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li id="btnPortExport"><a class="dropdown-item" href="#">Excel로 내보내기</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="widget-body mg-t10 " id="grid-table-port">
+                        </div>
+                    </div>
+                    
+
+                    <!-- Location Geo 등록/수정 화면 -->
+                <form class="hide p-4" role="form" id="repLocFrm" onsubmit="return false">
+                    <button name="btnMoveListForRepLoc" class="com_btn" type="button">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+
+                    <button id="btnRepDelLocGeo" name="btnRepDelLocGeo" class="com_btn fl_r" type="button" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button id="btnRepCopyLocGeo" name="btnRepCopyLocGeo" class="com_btn fl_r" type="button" title="Copy">
+                        <i class="bi bi-file-earmark-plus"></i>
+                    </button>
+
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right"
+                            for="iptRepLocPortCd">RepPort</label>
+                        <div class="col-sm-9">
+                            <input type="text" name="iptRepLocPortCd" id="iptRepLocPortCd"
+                                class="col-xs-12 col-sm-10" readonly />
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right"
+                            for="iptRepLocNm">Location</label>
+                        <div class="col-sm-9">
+                            <input class="d-none" type="text" id="iptLocCd" value="" />
+                            <select id="selRepPortType" class="col-xs-4 col-sm-4 form-select">
+                                <option value="A">All</option>
+                                <option value="C">CNTR</option>
+                                <option value="B">BULK</option>
+                            </select>
+                            <input type="text" id="iptRepLocNm" name="iptRepLocNm" class="col-xs-8 col-sm-6" />
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right" for="selRepAreaKind">Area
+                            Kind</label>
+                        <div class="col-sm-9">
+                            <select id="selRepAreaKind" name="selRepAreaKind" class="col-xs-12 col-sm-10 form-select">
+                                <option value="">Select</option>
+                                <option value="4A">Anchorage</option>
+                                <option value="3P">Pilot</option>
+                                <option value="5D">Drifting Area</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right" for="">Default</label>
+                        <div class="col-sm-1">
+                            <input class="form-check-input" type="checkbox" name="chkDefaultYn" value="Y">
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right"
+                            for="iptRepLocLat">Latitude / Longitude</label>
+                        <div class="col-sm-9">
+                            <input type="number" name="iptRepLocLat" id="iptRepLocLat"
+                                class="col-xs-5 col-sm-5" />
+                            <input type="number" name="iptRepLocLon" id="iptRepLocLon"
+                                class="col-xs-5 col-sm-5" />
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right" for="selRepGeoTypeCd">Data
+                            Type</label>
+                        <div class="col-sm-9">
+                            <select class="col-xs-12 col-sm-10 form-select" id="selRepGeoTypeCd" name="selRepGeoTypeCd">
+                                <option value="">Select</option>
+                                <!-- <option value="M">Point</option> -->
+                                <option value="C">Circle</option>
+                                <option value="P">Polygon</option>
+                                <option value="R">Rectangle</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2 d-none">
+                        <label class="col-sm-3 control-label no-padding-right"
+                            for="iptRepRadius">Radius</label>
+                        <div class="col-sm-9">
+                            <input type="number" id="iptRepRadius" class="col-xs-12 col-sm-10"
+                                value="0"></input>
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right"
+                            for="iptRepLocGeoData">Data</label>
+                        <div class="col-sm-9">
+                            <textarea id="iptRepLocGeoData" name="iptRepLocGeoData" class="col-xs-12 col-sm-10 form-control"></textarea>
+                            <button id="btnRepLocGeoData" class="draw-btn" type="button">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right" for="iptRepLocDwt">DWT</label>
+                        <div class="col-sm-9">
+                            <input type="number" name="iptRepLocDwt" id="iptRepLocDwt"
+                                class="col-xs-10 col-sm-8" />&ensp;<span>Ton</span>
+                        </div>
+                    </div>
+                    <div class="form-group d-flex pt-2">
+                        <label class="col-sm-3 control-label no-padding-right"
+                            for="iptRepLocDraft">Draft</label>
+                        <div class="col-sm-9">
+                            <input type="number" name="iptRepLocDraft" id="iptRepLocDraft"
+                                class="col-xs-10 col-sm-8" />&ensp;<span>Meters</span>
+                        </div>
+                    </div>
+                    <div class="btn-grp a-c mt-3">
+                        <button id="btnRepUpdLocGeo" class="com_btn save" title="Save"
+                            type="submit">Save</button>
+                            <!-- <button id="btnResetLocGeo" class="com_btn" type="button">Reset</button> -->
+                    </div>
+                </form>
+                    <!-- Port Geo 등록/수정 화면 -->
+                    <form class="hide p-4" role="form" id="portFrm" onsubmit="return false">
+                        <button name="btnMoveList" class="com_btn" type="button">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="iptPortCd">Port</label>
+                            <div class="col-sm-9">
+                                <input type="text" name="iptPortCd" id="iptPortCd" class="col-xs-6 uppercase" />
+                                <select id="selPortGeoType" name="selPortGeoType" class="col-xs-4 form-select">
+                                    <option value="">Port Type</option>
+                                    <option value="A">A</option>
+                                    <option value="B" selected>B</option>
+                                </select>
+                                <h4>TS</h4><input type="checkbox" name="checkTs"></input>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="iptPortNm">Name</label>
+                            <div class="col-sm-9">
+                                <input type="text" name="iptPortNm" id="iptPortNm" class="col-xs-10" style="width: inherit;" />
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="iptUnlocode">UN/Locode</label>
+                            <div class="col-sm-9">
+                                <input type="text" name="iptUnlocode" id="iptUnlocode" class="col-xs-10 uppercase" style="width: inherit;" maxlength="5" />
+                                <input type="checkbox" class="d-none" id="isValidPortCd">
+                            </div>
+                        </div>
+
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptPortGeoData">Data</label>
+                            <div class="col-sm-9">
+                                <textarea id="iptPortGeoData" name="iptPortGeoData" class="col-xs-12 col-sm-10 form-control"></textarea>
+                                <button id="btnPortGeoData" class="draw-btn" type="button">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="selRepPort">Rep.
+                                Port</label>
+                            <div class="col-sm-9">
+                                <select id="selRepPort" class="col-xs-12 col-sm-10 form-select">
+                                    <option value="">Select</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptPortLatLon">Latitude / Longitude</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="iptPortLat" id="iptPortLat"
+                                    class="col-xs-5 col-sm-5" />
+                                <input type="number" name="iptPortLon" id="iptPortLon"
+                                    class="col-xs-5 col-sm-5" />
+                            </div>
+                        </div>
+                        <div class="btn-grp a-c mt-3">
+                            <button id="btnUpdPortGeo" class="com_btn save" title="Save"
+                                type="submit">Save</button>
+                                <!-- <button id="btnResetPortGeo" class="com_btn" type="reset">Reset</button> -->
+                                <!-- <button id="btnPortDelGeo" class="com_btn" type="button">Delete</button> -->
+                        </div>
+                    </form>
+                    <!-- Rep 수정 화면 -->
+                    <form class="hide p-4" role="form" id="repEditFrm" onsubmit="return false">
+                        <button name="btnRepMoveList" class="com_btn" type="button">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="iptRepPortCd">Rep.
+                                Port</label>
+                            <div class="col-sm-9">
+                                <div id="iptRepPortCd" class="col-xs-12 col-sm-10"></div>
+
+                                <!-- <button type="button" id="srchRepPortBtn" class="src">검색</button> -->
+                            </div>
+                        </div>
+                    </form>
+                    <!-- Rep. Port 등록 화면 -->
+                    <form class="hide p-4" role="form" id="repFrm" onsubmit="return false">
+                        <button name="btnRepMoveList" class="com_btn" type="button">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="iptRepPortCd">Rep.
+                                Port</label>
+                            <div class="col-sm-9">
+                                <input type="text" name="iptRepPortCd" id="iptRepPortCd"
+                                    class="col-xs-12 col-sm-10" />
+                                <!-- <button type="button" id="srchRepPortBtn" class="src">검색</button> -->
+                            </div>
+                        </div>
+                        <div class="btn-grp a-c mt-3 pt-2">
+                            <button id="btnInsRep" class="com_btn save" title="Save"
+                                type="submit">Save</button>
+                                <!-- <button id="btnResetRep" class="com_btn" type="button">Reset</button> -->
+                        </div>
+                    </form>
+
+                    <!-- Location 목록 -->
+                    <div id="locGeoList">
+                        <span id="srchLocAreaForRepPort" class="hide">
+                            <select class="form-select" id="">
+                                <option value="">Port</option>
+                            </select>
+                            <input type="text" id="srchPortValForRepPort">
+                        </span>
+                        <div class="srch a-c">
+                            <select class="form-select" id="srchLocType">
+                                <option value="">Type</option>
+                                <option value="A">All</option>
+                                <option value="C">CNTR</option>
+                                <option value="B">BULK</option>
+                            </select>
+                            <select class="form-select" id="srchLocKind">
+                                <option value="">Kind</option>
+                                <option value="4A">Anchorage</option>
+                                <option value="3P">Pilot</option>
+                                <option value="5D">Drifting Area</option>
+                            </select>
+                            <input type="text" class="search form-control form-control-lg uppercase" id="srchLocVal" onkeyup="funcEnterKey(this)">
+                            <button type="button" id="srchLocBtn" class="btn_src" style="top: -1px !important;">검색</button>
+
+                            <div class="btn-group fl_r hide">
+                                <button type="button" class="dropdown-btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li id="btnAddLocGeo"><a class="dropdown-item" href="#">Loc 등록</a></li>
+                                    <li id="btnDelCheckLocGeo"><a class="dropdown-item" href="#">Loc 삭제</a></li>
+                                    <li id="btnCopyCheckLocGeo"><a class="dropdown-item" href="#">Loc 복사</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li id="btnCopyModal"><a class="dropdown-item" href="#">다른 Port로 복사</a></li>
+                                    <li id="btnMoveModal"><a class="dropdown-item" href="#">다른 Port로 이동</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li id="btnLocExport"><a class="dropdown-item" href="#">Excel로 내보내기</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+
+                        <!-- <button type="button" id="btnAddLocGeo" class="com_btn f-right d-none">Loc
+                            등록</button> -->
+                        <div class="widget-body mg-t10" id="grid-table-loc"></div>
+                    </div>
+
+                    <!-- Location Geo 등록/수정 화면 -->
+                    <form class="hide p-4" role="form" id="locFrm" onsubmit="return false">
+                        <button name="btnMoveListForLoc" class="com_btn" type="button">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+
+                        <button id="btnDelLocGeo" name="btnDelLocGeo" class="com_btn fl_r" type="button" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <button id="btnCopyLocGeo" name="btnCopyLocGeo" class="com_btn fl_r" type="button" title="Copy">
+                            <i class="bi bi-file-earmark-plus"></i>
+                        </button>
+
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptLocPortCd">Port</label>
+                            <div class="col-sm-9">
+                                <input type="text" name="iptLocPortCd" id="iptLocPortCd"
+                                    class="col-xs-12 col-sm-10" readonly />
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptLocNm">Location</label>
+                            <div class="col-sm-9">
+                                <input class="d-none" type="text" id="iptLocCd" value="" />
+                                <select id="selPortType" class="col-xs-4 col-sm-4 form-select">
+                                    <option value="A">All</option>
+                                    <option value="C">CNTR</option>
+                                    <option value="B">BULK</option>
+                                </select>
+                                <input type="text" id="iptLocNm" name="iptLocNm" class="col-xs-8 col-sm-6" />
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="selAreaKind">Area
+                                Kind</label>
+                            <div class="col-sm-9">
+                                <select id="selAreaKind" name="selAreaKind" class="col-xs-12 col-sm-10 form-select">
+                                    <option value="">Select</option>
+                                    <option value="4A">Anchorage</option>
+                                    <option value="3P">Pilot</option>
+                                    <option value="5D">Drifting Area</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="">Default</label>
+                            <div class="col-sm-1">
+                                <input class="form-check-input" type="checkbox" name="chkDefaultYn" value="Y">
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptLocLat">Latitude / Longitude</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="iptLocLat" id="iptLocLat"
+                                    class="col-xs-5 col-sm-5" />
+                                <input type="number" name="iptLocLon" id="iptLocLon"
+                                    class="col-xs-5 col-sm-5" />
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="selGeoTypeCd">Data
+                                Type</label>
+                            <div class="col-sm-9">
+                                <select class="col-xs-12 col-sm-10 form-select" id="selGeoTypeCd" name="selGeoTypeCd">
+                                    <option value="">Select</option>
+                                    <!-- <option value="M">Point</option> -->
+                                    <option value="C">Circle</option>
+                                    <option value="P">Polygon</option>
+                                    <option value="R">Rectangle</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2 d-none">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptRadius">Radius</label>
+                            <div class="col-sm-9">
+                                <input type="number" id="iptRadius" class="col-xs-12 col-sm-10"
+                                    value="0"></input>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptLocGeoData">Data</label>
+                            <div class="col-sm-9">
+                                <textarea id="iptLocGeoData" name="iptLocGeoData" class="col-xs-12 col-sm-10 form-control"></textarea>
+                                <button id="btnLocGeoData" class="draw-btn" type="button">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right" for="iptLocDwt">DWT</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="iptLocDwt" id="iptLocDwt"
+                                    class="col-xs-10 col-sm-8" />&ensp;<span>Ton</span>
+                            </div>
+                        </div>
+                        <div class="form-group d-flex pt-2">
+                            <label class="col-sm-3 control-label no-padding-right"
+                                for="iptLocDraft">Draft</label>
+                            <div class="col-sm-9">
+                                <input type="number" name="iptLocDraft" id="iptLocDraft"
+                                    class="col-xs-10 col-sm-8" />&ensp;<span>Meters</span>
+                            </div>
+                        </div>
+                        <div class="btn-grp a-c mt-3">
+                            <button id="btnUpdLocGeo" class="com_btn save" title="Save"
+                                type="submit">Save</button>
+                                <!-- <button id="btnResetLocGeo" class="com_btn" type="button">Reset</button> -->
+                        </div>
+                    </form>
+                    <!-- View Vessel -->
+                    <!-- <div id="viewVessel" class="d-none">
+                        <div class="view_vsl mg-t30 mg-b20">
+                            <span> Search Vessel <i class="bi bi-chevron-down"></i></span>
+                            <div id="hiddenArea" class="d-none">
+                                <div class="form-group d-flex">
+                                    <label class="col-sm-4 control-label no-padding-right" for="">Carrier <br />
+                                        (Operator)</label>
+                                    <div class="col-sm-8">
+                                        <select id="selCrrCd" class="col-xs-10 col-sm-8">
+                                            <option value="">Carrier </option>
+                                            <th:block th:each="data : ${apiCrrCd?.crrlistinfo}">
+                                                <option th:value="${data.CRR_CD}" th:text="${data.CRR_NM}"
+                                                    th:selected="${data.CRR_CD}==${crrCd}">
+                                            </th:block>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group d-flex">
+                                    <label class="col-sm-4 control-label no-padding-right" for=""></label>
+                                    <div class="col-sm-8">
+                                        <label><input type="radio" name="chkSep" value="mst" class="mg-r5"
+                                                checked>master</label>
+                                        <label><input type="radio" name="chkSep" value="bkg"
+                                                class="mg-r5">Booking</label>
+                                    </div>
+                                </div>
+                                <div class="form-group d-flex">
+                                    <label class="col-sm-4 control-label no-padding-right"
+                                        for="">Distance</label>
+                                    <div class="col-sm-8">
+                                        <input type="number" name="" id="iptDist" class="col-xs-10 col-sm-8"
+                                            value="10" /><span>Km (<=)</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group d-flex">
+                                    <label class="col-sm-4 control-label no-padding-right"
+                                        for="selStatus">Status</label>
+                                    <div class="col-sm-8">
+                                        <select class="col-xs-10 col-sm-8" id="selStatus" name="">
+                                            <option value="M">Moored</option>
+                                            <option value="A">Anchor</option>
+                                            <option value="B">Moored or Anchor</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group d-flex">
+                                    <label class="col-sm-4 control-label no-padding-right" for="iptSpeed">
+                                        Speed</label>
+                                    <div class="col-sm-8">
+                                        <input type="number" name="" id="iptSpeed" class="col-xs-10 col-sm-8"
+                                            value="1" /><span>Kn (<=) </span>
+                                    </div>
+                                </div>
+                                <div class="form-group d-flex">
+                                    <label class="col-sm-4 control-label no-padding-right" for="iptDwt">
+                                        DWT</label>
+                                    <div class="col-sm-8">
+                                        <input type="number" name="" id="iptDwt" class="col-xs-10 col-sm-8"
+                                            value="0" /><span>Ton (>=)</span>
+                                    </div>
+                                </div>
+                                <button input type="button" name="srchShipBtn" class="src fl_r">
+                                </button>
+                            </div>
+                        </div>
+                    </div> -->
+                    
+
+                <!-- rep 목록 -->
+                <div id="repPortGeoList" class="page-content pt-2">
+                    <div class="title mb-2">Rep Menu</div>
+                    <div class="srch a-c">
+                        <label for="srchRepPortType"></label>
+                        <select class="form-select" id="srchRepPortType">
+                            <option value="">Type</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                        </select>
+                        <select class="form-select" id="srchRepPortKey">
+                            <option value="PORT_CD">Port</option>
+                            <option value="REP_PORT_CD">Rep. Port</option>
+                            <option value="UN_LOC_CD">UN/Locode</option>
+                        </select>
+                        <label for="srchRepPortVal"></label>
+                        <input type="text" class="search form-control form-control-lg uppercase" id="srchRepPortVal" onkeyup="funcEnterKey(this)" >
+                        <button type="button" id="srchRepPortBtn" class="btn_src" style="top: -1px !important;">검색</button>
+
+                        <div class="btn-group fl_r mt-2">
+                            <button type="button" class="dropdown-btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li id="btnMenuPortGeo"><a class="dropdown-item" href="#">Port 메뉴</a></li>
+                                <li id="btnAddRepPort"><a class="dropdown-item" href="#">Rep. 등록</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li id="btnPortExport"><a class="dropdown-item" href="#">Excel로 내보내기</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="widget-body mg-t10 " id="grid-table-port-menu">
+                    </div>
+                </div>
+                <!-- Location 목록 -->
+                <div id="repLocGeoList" class="hide">
+                    <span id="srchLocAreaForRepPort" class="hide">
+                        <select class="form-select" id="">
+                            <option value="">Port</option>
+                        </select>
+                        <input type="text" id="srchRepPortValForRepPort">
+                    </span>
+                    <div class="srch a-c">
+                        <select class="form-select" id="srchLocType">
+                            <option value="">Type</option>
+                            <option value="A">All</option>
+                            <option value="C">CNTR</option>
+                            <option value="B">BULK</option>
+                        </select>
+                        <select class="form-select" id="srchLocKind">
+                            <option value="">Kind</option>
+                            <option value="4A">Anchorage</option>
+                            <option value="3P">Pilot</option>
+                            <option value="5D">Drifting Area</option>
+                        </select>
+                        <input type="text" class="search form-control form-control-lg uppercase" id="srchLocVal" onkeyup="funcEnterKey(this)">
+                        <button type="button" id="srchLocBtn" class="btn_src" style="top: -1px !important;">검색</button>
+
+                        <div class="btn-group fl_r hide">
+                            <button type="button" class="dropdown-btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li id="btnAddRepLocGeo"><a class="dropdown-item" href="#">Loc 등록</a></li>
+                                <li id="btnDelCheckRepLocGeo"><a class="dropdown-item" href="#">Loc 삭제</a></li>
+                                <li id="btnCopyCheckRepLocGeo"><a class="dropdown-item" href="#">Loc 복사</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li class="btnRepCopyModal"><a class="dropdown-item" href="#">다른 Port로 복사</a></li>
+                                <li id="btnRepMoveModal"><a class="dropdown-item" href="#">다른 Port로 이동</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li class="btnLocExport"><a class="dropdown-item" href="#">Excel로 내보내기</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- <button type="button" id="btnAddLocGeo" class="com_btn f-right d-none">Loc
+                        등록</button> -->
+                    <div class="widget-body mg-t10" id="grid-table-loc-menu"></div>
+                </div>
+            </div>
+                
+                <!-- Geofence Loc Copy Modal -->
+                <div class="modal fade" id="copyModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-md modal-dialog-centered">
+                        <div class="modal-content alert">
+                            <div class="modal-header">
+                                <h3>Copy Geofence</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body alert">
+                                <div class="a-c">
+                                    <!-- Port 목록 -->
+                                    <div id="portNmList" class="pt-2">
+                                        <div class="srch a-c">
+                                            <label for="mSrchPortType"></label>
+                                            <select class="form-select" name="mSrchPortType">
+                                                <option value="">Type</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                            </select>
+                                            <select class="form-select" name="mSrchPortKey">
+                                                <option value="PORT_CD">Port</option>
+                                                <option value="REP_PORT_CD">Rep. Port</option>
+                                                <option value="UN_LOC_CD">UN/Locode</option>
+                                            </select>
+                                            <label for="mSrchPortVal"></label>
+                                            <input type="text" class="search form-control form-control-lg uppercase" name="mSrchPortVal" onkeyup="funcEnterKey(this)" >
+                                            <button type="button" id="mSrchCopyPortBtn" class="btn_src" style="top: -1px !important;">검색</button>
+                                        </div>
+                                        <div class="widget-body mg-t10 " id="grid-table-copy-modal-port">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" id="btnCopyToOtherPort" class="modal-btn fl_r">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Geofence Loc Move Modal -->
+                <div class="modal fade" id="moveModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-md modal-dialog-centered">
+                        <div class="modal-content alert">
+                            <div class="modal-header">
+                                <h3>Move Geofence</h3>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body alert">
+                                <div class="a-c">
+                                    <!-- Port 목록 -->
+                                    <div id="portNmList" class="pt-2">
+                                        <div class="srch a-c">
+                                            <label for="mSrchPortType"></label>
+                                            <select class="form-select" name="mSrchPortType">
+                                                <option value="">Type</option>
+                                                <option value="A">A</option>
+                                                <option value="B">B</option>
+                                            </select>
+                                            <select class="form-select" name="mSrchPortKey">
+                                                <option value="PORT_CD">Port</option>
+                                                <option value="REP_PORT_CD">Rep. Port</option>
+                                                <option value="UN_LOC_CD">UN/Locode</option>
+                                            </select>
+                                            <label for="mSrchPortVal"></label>
+                                            <input type="text" class="search form-control form-control-lg uppercase" name="mSrchPortVal" onkeyup="funcEnterKey(this)" >
+                                            <button type="button" id="mSrchMovePortBtn" class="btn_src" style="top: -1px !important;">검색</button>
+                                        </div>
+                                        <div class="widget-body mg-t10 " id="grid-table-move-modal-port">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" id="btnMoveToOtherPort" class="modal-btn fl_r">Move</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-7 second-box-wiget" style="padding: 0px;">
+                    <!-- PAGE CONTENT BEGINS -->
+                    <div class="widget-box widget-color-blue2 no-margin" style="height: 100%;">
+                        <div class="widget-body" style="height: 100%;">
+                            <iframe id="mapIframe" src="/management/map-iframe" width="100%" height="100%"></iframe>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+        <script type="text/javascript" src="/js/management/geofence.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                Navi.init();
+                Navi.lockMapMenu();
+                // Navi.open('Settings');
+
+                Geofence.init();
+            });
+        </script>
+</body>
+</html>

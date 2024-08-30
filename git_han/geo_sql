@@ -1,0 +1,268 @@
+<select id="searchRepLocGeoList" resultType="map">
+    
+	   SELECT
+              CRR_CD
+            , REP_PORT_CD
+            , LOC_CD
+            , PORT_TYPE
+            , LOC_NAME
+            , AREA_KIND
+            , DATA_TYPE
+            , RAD_SIZE
+            , LOC_GEO
+            , LOC_LAT
+            , LOC_LON
+            , DWT_LMT
+            , DRAFT_LMT
+            , DEFAULT_YN
+            , UPD_DT
+        FROM
+            MST_REP_PORT_LOC_GEO  
+        WHERE 1=1
+        <if test="CRR_CD != null and !''.equals(CRR_CD)">
+             AND CRR_CD = #{CRR_CD}
+        </if>
+        <if test="REP_PORT_CD != null and !''.equals(REP_PORT_CD)">
+            AND REP_PORT_CD = UPPER(#{REP_PORT_CD})
+        </if>
+        <if test="LOC_NAME != null and !''.equals(LOC_NAME)">
+            AND UPPER(LOC_NAME) LIKE CONCAT('%', UPPER(#{LOC_NAME}), '%')
+        </if>
+        <if test="AREA_KIND != null and !''.equals(AREA_KIND)">
+            AND UPPER(AREA_KIND) LIKE CONCAT('%', UPPER(#{AREA_KIND}), '%')
+        </if>
+        <if test="PORT_TYPE != null and !''.equals(PORT_TYPE)">
+            AND UPPER(PORT_TYPE) LIKE CONCAT('%', UPPER(#{PORT_TYPE}), '%')
+        </if>
+        ORDER
+	        BY REP_PORT_CD, AREA_KIND, PORT_TYPE, LOC_NAME ASC
+	</select>
+    <insert id="insertPortGeoData" parameterType="map">	
+            INSERT INTO MST_PORT_GEO (
+                  CRR_CD
+                , PORT_CD
+                , PORT_NM
+                , PORT_TYPE
+                , PORT_GEO
+                , LOC_LAT
+                , LOC_LON
+                , REP_PORT
+                , UN_LOC_CD
+                , TS_PORT
+                , CRE_USR_ID
+                , CRE_DT
+                , UPD_USR_ID
+                , UPD_DT
+            ) VALUES (
+                  #{CRR_CD}
+                , #{PORT_CD}
+                , #{PORT_NM}
+                , #{PORT_TYPE}
+                , #{PORT_GEO}
+                , #{LOC_LAT}
+                , #{LOC_LON}
+                , #{REP_PORT_CD}
+                , #{UN_LOC_CD}
+                , #{TS_PORT}
+                , #{USR_ID}
+                , NOW()
+                , #{USR_ID}
+                , NOW()
+            ) ON DUPLICATE KEY UPDATE
+                PORT_NM     = #{PORT_NM}
+                ,PORT_TYPE  = #{PORT_TYPE}
+                ,PORT_GEO   = #{PORT_GEO}
+                ,LOC_LAT    = #{LOC_LAT}
+                ,LOC_LON    = #{LOC_LON}
+                ,REP_PORT   = #{REP_PORT_CD}
+                ,UN_LOC_CD  = #{UN_LOC_CD}
+                ,UPD_USR_ID = #{USR_ID}
+                ,UPD_DT     = NOW()
+	</insert>
+
+     <insert id="insertRepLocGeoData" parameterType="map">	
+            INSERT INTO MST_REP_PORT_LOC_GEO (
+                  CRR_CD
+                , REP_PORT_CD
+                , LOC_CD
+                , PORT_TYPE
+                , LOC_NAME
+                , AREA_KIND
+                , DATA_TYPE
+                , RAD_SIZE
+                , LOC_GEO
+                , LOC_LAT
+                , LOC_LON
+                , DWT_LMT
+                , DRAFT_LMT
+                , DEFAULT_YN
+                , REG_USR_No
+                , REG_DT    
+                , UPD_USR_No
+                , UPD_DT
+            ) VALUES (
+                  #{CRR_CD}
+                , #{REP_PORT_CD}
+                ,(SELECT LOC_SEQ FROM ( SELECT IFNULL(MAX(CAST(LOC_CD AS UNSIGNED))+1,1) AS LOC_SEQ FROM MST_REP_PORT_LOC_GEO WHERE CRR_CD = #{CRR_CD} and REP_PORT_CD = #{REP_PORT_CD} ) SEQ)
+                , #{PORT_TYPE}
+                , #{LOC_NAME}
+                , #{AREA_KIND}
+                , #{DATA_TYPE}
+                , #{RAD_SIZE}
+                , #{LOC_GEO}
+                , #{LOC_LAT}
+                , #{LOC_LON}
+                , #{DWT_LMT}
+                , #{DRAFT_LMT}
+                , #{DEFAULT_YN}
+                , #{USR_ID}
+                , NOW()
+                , #{USR_ID}
+                , NOW()
+            ) ON DUPLICATE KEY UPDATE
+                  LOC_NAME   = #{LOC_NAME}
+                , AREA_KIND  = #{AREA_KIND}
+                , DATA_TYPE  = #{DATA_TYPE}
+                , RAD_SIZE   = #{RAD_SIZE}
+                , LOC_GEO    = #{LOC_GEO}
+                , LOC_LAT    = #{LOC_LAT}
+                , LOC_LON    = #{LOC_LON}
+                , DWT_LMT    = #{DWT_LMT}
+                , DRAFT_LMT  = #{DRAFT_LMT}
+                , DEFAULT_YN = #{DEFAULT_YN}
+                , UPD_DT     = NOW()
+	</insert>
+
+     <select id="searchPortCd" parameterType="map" resultType="map">
+        SELECT *
+        FROM MST_PORT_GEO
+        WHERE PORT_CD = #{PORT_CD}
+      </select>
+      
+      <select id="searchRepPortCd" parameterType="map" resultType="map">
+        SELECT *
+        FROM MST_REP_PORT_GEO
+        WHERE REP_PORT = #{REP_PORT}
+      </select>
+
+    <select id="searchRepPortGeoList" parameterType="map" resultType="map">
+            SELECT 
+                (SELECT COUNT(*) 
+                FROM MST_REP_PORT_GEO  
+                LEFT JOIN MST_UN_LOCATION ON REP_PORT = LOC_CD
+                WHERE 1=1
+                <if test="CRR_CD != null and !CRR_CD.isEmpty()">
+                    AND CRR_CD = #{CRR_CD}
+                </if>
+                <if test="REP_PORT != null and !REP_PORT.isEmpty()">
+                    AND (
+                        UPPER(REP_PORT) LIKE CONCAT('%', UPPER(#{REP_PORT}), '%')
+                        OR LOC_KOR_NM LIKE CONCAT('%', #{REP_PORT}, '%') 
+                    )
+                </if>
+                <if test="REP_PORT != null and REP_PORT.isEmpty()"> 
+                    AND (REP_PORT IS NOT NULL AND REP_PORT != '')
+                </if>
+                <if test="UN_LOC_CD != null and !UN_LOC_CD.isEmpty()">
+                    AND UN_LOC_CD LIKE CONCAT(UPPER(#{UN_LOC_CD}), '%')
+                </if>
+                <if test="UN_LOC_CD != null and UN_LOC_CD.isEmpty()">
+                    AND (UN_LOC_CD IS NOT NULL AND UN_LOC_CD != '')
+                </if>
+                <if test="PORT_TYPE != null and !PORT_TYPE.isEmpty()">
+                    AND PORT_TYPE = #{PORT_TYPE}
+                </if>
+                ) AS TOTAL_COUNT,
+                CRR_CD,
+                REP_PORT,
+                PORT_GEO,
+                LOC_LAT,
+                LOC_LON,
+                LOC_NM AS REP_PORT_NAME,
+                UN_LOC_CD,
+                MST_REP_PORT_GEO.UPD_DT
+            FROM MST_REP_PORT_GEO
+            LEFT JOIN MST_UN_LOCATION ON REP_PORT = LOC_CD
+            WHERE 1=1
+            <if test="CRR_CD != null and !CRR_CD.isEmpty()">
+                AND CRR_CD = #{CRR_CD}
+            </if>
+            <if test="REP_PORT != null and !REP_PORT.isEmpty()">
+                AND (
+                    UPPER(REP_PORT) LIKE CONCAT('%', UPPER(#{REP_PORT}), '%')
+                    OR UPPER(LOC_NM) LIKE CONCAT('%', UPPER(#{REP_PORT}), '%')
+                    OR LOC_KOR_NM LIKE CONCAT('%', #{REP_PORT}, '%')
+                )
+            </if>
+            <if test="REP_PORT != null and REP_PORT.isEmpty()">
+                AND (REP_PORT IS NOT NULL AND REP_PORT != '')
+            </if>
+            <if test="UN_LOC_CD != null and !UN_LOC_CD.isEmpty()">
+                AND UN_LOC_CD LIKE CONCAT(UPPER(#{UN_LOC_CD}), '%')
+            </if>
+            <if test="UN_LOC_CD != null and UN_LOC_CD.isEmpty()">
+                AND (UN_LOC_CD IS NOT NULL AND UN_LOC_CD != '')
+            </if>
+            <if test="PORT_TYPE != null and !PORT_TYPE.isEmpty()">
+                AND PORT_TYPE = #{PORT_TYPE}
+            </if>
+            ORDER BY REP_PORT ASC
+            LIMIT #{ROWS_PER_PAGE} OFFSET #{PAGE_NUMBER};
+        </select>
+
+    <insert id="insertRepPortGeoData" parameterType="map">
+            INSERT INTO MST_REP_PORT_GEO (
+                CRR_CD,
+                REP_PORT,
+                PORT_GEO,
+                LOC_LAT,
+                LOC_LON,
+                CRE_USR_ID,
+                CRE_DT,
+                UPD_USR_ID,
+                UPD_DT,
+                REG_USR_NO,
+                REG_DT,
+                UPD_USR_NO
+            ) VALUES (
+                #{CRR_CD},
+                #{REP_PORT},
+                #{PORT_GEO},
+                #{LOC_LAT},
+                #{LOC_LON},
+                #{CRE_USR_ID},
+                NOW(),
+                #{UPD_USR_ID},
+                NOW(),
+                #{REG_USR_NO},
+                #{REG_DT},
+                #{UPD_USR_NO}
+            ) ON DUPLICATE KEY UPDATE
+                CRR_CD      = #{CRR_CD},
+                REP_PORT    = #{REP_PORT},
+                UPD_DT      = NOW()
+    </insert>
+
+     <update id="updateRepPortGeoData" parameterType="map">	
+            UPDATE MST_PORT_GEO
+            SET  CRR_CD          = #{CRR_CD}
+                ,REP_PORT_CD     = #{REP_PORT_CD}
+                ,LOC_CD          = #{LOC_CD}
+                ,PORT_TYPE       = #{PORT_TYPE}
+                ,LOC_NAME        = #{LOC_NAME}
+                ,AREA_KIND       = #{AREA_KIND}
+                ,DATA_TYPE       = #{DATA_TYPE}
+                ,RAD_SIZE        = #{RAD_SIZE}
+                ,LOC_GEO         = #{LOC_GEO}
+                ,LOC_LAT         = #{LOC_LAT}
+                ,LOC_LON         = #{LOC_LON}
+                ,DWT_LMT         = #{DWT_LMT}
+                ,DRAFT_LMT       = #{DRAFT_LMT}
+                ,DEFAULT_YN      = #{DEFAULT_YN}
+                ,REG_USR_NO      = #{REG_USR_NO}
+                ,REG_DT          = #{REG_DT}
+                ,UPD_USR_NO      = #{UPD_USR_NO}
+                ,UPD_DT          = #{UPD_DT}
+            WHERE CRR_CD  = #{CRR_CD}
+              AND PORT_CD = #{PORT_CD}
+	</update>
