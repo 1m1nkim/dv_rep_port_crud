@@ -1,9 +1,9 @@
 # dv_rep_port_crud
 
-프로젝트 제목 : DEEPVUEGEOFENCE_REP_PORT 페이지 개발 및 CRUD 처리
+프로젝트 제목 : DEEPVUE GEOFENCE_REP_PORT 페이지 개발 및 CRUD 처리
 프로젝트 기간 : 2024년 08월 15일 ~ 2024년 08월 29일 (약 2주) 제출일 : 2024년 08월 29일
 
-프로젝트 개요 : DEEPVUE GEOFENCE_PORT 페이지는 PORT관련 GEOFENCE를 등록, 관리, 확인 할 수 있는 페이지입니다. 이 페이지에서 파생 된 GEOFENCE_REP_PORT 페이지를 개발하여 REP의 특성을 가진 PORT들을 따로 구성하여 등록, 처리, 확인 할 수 있게 페이지를 만들게 되었습니다.
+프로젝트 개요 : DEEPVUE GEOFENCE_PORT 페이지는 PORT관련 GEOFENCE를 등록, 관리, 확인 할 수 있는 페이지입니다. 이 페이지에서 파생 된 GEOFENCE_REP_PORT 페이지를 개발하여 REP의 특성을 가진 PORT들을 따로 구성하여 등록, 처리, 확인 할 수 있게 페이지를 만들게 되었습니다.
 
 프로젝트 일정 : 
 2024년 08월 15일 ~ 2024년 08월 22일: 코드 분석 및 간단한 테스트 코드 작성
